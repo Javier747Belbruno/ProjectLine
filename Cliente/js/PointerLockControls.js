@@ -1,11 +1,21 @@
 /**
  * @author mrdoob / http://mrdoob.com/
  * @author schteppe / https://github.com/schteppe
- */
- var PointerLockControls = function ( camera, cannonBody ) {
+ */ 
+ import * as THREE from './Three.js'
+import CANNON from 'cannon'
+export default class
+{
+    constructor(camera,boxBodyPrincipal)
+    {
+        this.Pointer(camera,boxBodyPrincipal)
+    }
+
+Pointer(camera, cannonBody)
+    {
 
     var eyeYPos = 2; // eyes are 2 meters above the ground
-    var velocityFactor = 0.2;
+    var velocityFactor = 0.5;//0.2
     var jumpVelocity = 20;
     var scope = this;
 
@@ -174,4 +184,5 @@
 
         yawObject.position.copy(cannonBody.position);
     };
-};
+    };
+}

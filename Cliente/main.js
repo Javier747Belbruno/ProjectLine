@@ -1,21 +1,42 @@
+    import './style/main.css'
+    import * as THREE from './js/Three.js'
+
+    import CANNON from 'cannon'
+    import PointerLockControls from './js/PointerLockControls.js'
+
 
             var blocker = document.getElementById( 'blocker' );
             var instructions = document.getElementById( 'instructions' );
 
             var controls;
             var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
+            
+            //const OrbitControls = ThreeOrbitControls(THREE)
 
+            //import Application from './Application.js'
+
+            //window.application = new Application({
+            var canvas = document.querySelector('.js-canvas')
+            canvas.style.display = 'none';
+            //})
+            //var havePointerLock = false;
             //controls.enabled = true;
             //blocker.style.display = 'none';
+            //instructions.style.display = 'none';
+
             if ( havePointerLock ) {
 
                 var element = document.body;
+                //var element = canvas;
 
                 var pointerlockchange = function ( event ) {
 
-                    if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
-
-                        controls.enabled = true;
+                   if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
+                        
+                        //document.addEventListener("DOMContentLoaded", function(event) {
+                          controls.enabled = true;
+                        //});
+                        //controls.enabled = true;
 
                         blocker.style.display = 'none';
 
@@ -30,6 +51,8 @@
                         instructions.style.display = '';
 
                     }
+                    /*controls.enabled = true;
+                    blocker.style.display = 'none';*/
 
                 }
 
@@ -48,6 +71,7 @@
 
                 instructions.addEventListener( 'click', function ( event ) {
                     instructions.style.display = 'none';
+                    canvas.style.display = '';
 
                     // Ask the browser to lock the pointer
                     element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
@@ -73,13 +97,25 @@
 
                         element.requestFullscreen();
 
+
                     } else {
 
                         element.requestPointerLock();
+                        console.log( "Canvas" + element.requestPointerLock());
+                        //element.requestFullscreen();
 
                     }
+                if(firstTime){
+                firstTime = false;
+                    initCannon();
+                    init();
+                    animate();
+                }
+                    
 
                 }, false );
+
+
 
             } else {
 
@@ -87,20 +123,26 @@
 
             }
 
+           
+                var firstTime= true;
+                var camera, scene, renderer;
+                var geometry, material, mesh;
+                var time = Date.now();
 
-            var camera, scene, renderer;
-            var geometry, material, mesh;
-            var time = Date.now();
+                var boxShapePrincipal, boxBodyPrincipal, world, physicsMaterial, walls=[], 
+                balls=[], ballMeshes=[], boxes=[], boxMeshes=[], groundBody;
 
-            var sphereShape, sphereBody, world, physicsMaterial, walls=[], balls=[], ballMeshes=[], boxes=[], boxMeshes=[]
-                ,groundBody;
+                var dt = 1/60;
 
-            
+                var ballShape = new CANNON.Sphere(0.2);
+                var ballGeometry = new THREE.SphereGeometry(ballShape.radius, 32, 32);
+                var shootDirection = new THREE.Vector3();
+                var shootVelo = 50;
+                var projector = new THREE.Projector();
 
 
-            initCannon();
-            init();
-            animate();
+                
+
 
             function initCannon(){
                 // Setup our world
@@ -134,14 +176,17 @@
                 // We must add the contact materials to the world
                 world.addContactMaterial(physicsContactMaterial);
 
-                // Create a sphere
-                var mass = 76, radius = 3;
-                sphereShape = new CANNON.Sphere(radius);
-                sphereBody = new CANNON.Body({ mass: mass });
-                sphereBody.addShape(sphereShape);
-                sphereBody.position.set(0,5,0);
-                sphereBody.linearDamping = 0.9;
-                world.addBody(sphereBody);
+                // Create a boxBodyPrincipal
+                var limits = new CANNON.Vec3(1,1,1);
+                var boxShapePrincipal = new CANNON.Box(limits);
+                var mass = 70//, radius = 3;
+                //sphereShape = new CANNON.Sphere(radius);
+                boxBodyPrincipal = new CANNON.Body({ mass: mass });
+                console.log(boxBodyPrincipal)
+                boxBodyPrincipal.addShape(boxShapePrincipal);
+                boxBodyPrincipal.position.set(0,5,0);
+                boxBodyPrincipal.linearDamping = 0.9;
+                world.addBody(boxBodyPrincipal);
 
                 // Create a plane
                 var groundShape = new CANNON.Plane();
@@ -153,7 +198,7 @@
 
             function init() {
 
-                camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+                camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );//0.1
 
                 scene = new THREE.Scene();
                 scene.fog = new THREE.Fog( 0x000000, 0, 500 );
@@ -161,8 +206,8 @@
                 var ambient = new THREE.AmbientLight( 0x111111 );
                 scene.add( ambient );
 
-                light = new THREE.SpotLight( 0xffffff );
-                light.position.set( 10, 30, 20 );
+                var light = new THREE.SpotLight( 0xffffff );
+                light.position.set( 20, 60, 40 );
                 light.target.position.set( 0, 0, 0 );
                 if(true){
                     light.castShadow = true;
@@ -183,7 +228,8 @@
 
 
                 //controls = new PointerLockControls( camera , sphereBody );
-                controls = new PointerLockControls( camera , sphereBody );
+                console.log(boxBody);
+                controls = new PointerLockControls( camera , boxBodyPrincipal);
                 scene.add( controls.getObject() );
 
                 // floor
@@ -197,11 +243,15 @@
                 mesh.receiveShadow = true;
                 scene.add( mesh );
 
-                renderer = new THREE.WebGLRenderer();
+                //renderer = new THREE.WebGLRenderer();
+                renderer = new THREE.WebGLRenderer({ canvas })
                 renderer.shadowMapEnabled = true;
                 renderer.shadowMapSoft = true;
                 renderer.setSize( window.innerWidth, window.innerHeight );
                 renderer.setClearColor( scene.fog.color, 1 );
+
+                //controls = new OrbitControls(this.camera, this.$canvas)
+
 
                 document.body.appendChild( renderer.domElement );
 
@@ -244,7 +294,7 @@
                     boxbody.position.set(5,(N-i)*(size*2+2*space) + size*2+space,0);
                     boxbody.linearDamping = 0.01;
                     boxbody.angularDamping = 0.01;
-                    // boxMesh.castShadow = true;
+                    boxMesh.castShadow = true;
                     boxMesh.receiveShadow = true;
                     world.addBody(boxbody);
                     scene.add(boxMesh);
@@ -268,9 +318,10 @@
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize( window.innerWidth, window.innerHeight );
+
             }
 
-            var dt = 1/60;
+           
             function animate() {
                 requestAnimationFrame( animate );
                 if(controls.enabled){
@@ -299,25 +350,24 @@
                     }
             }
 
-            var ballShape = new CANNON.Sphere(0.2);
-            var ballGeometry = new THREE.SphereGeometry(ballShape.radius, 32, 32);
-            var shootDirection = new THREE.Vector3();
-            var shootVelo = 50;
-            var projector = new THREE.Projector();
+           
+            
             function getShootDir(targetVec){
                 var vector = targetVec;
                 targetVec.set(0,0,1);
                 projector.unprojectVector(vector, camera);
-                var ray = new THREE.Ray(sphereBody.position, vector.sub(sphereBody.position).normalize() );
+                var ray = new THREE.Ray(boxBodyPrincipal.position, vector.sub(boxBodyPrincipal.position).normalize() );
                 targetVec.copy(ray.direction);
             }
 
             window.addEventListener("click",function(e){
+
+
                 if(controls.enabled==true){
-                    var x = sphereBody.position.x;
-                    var y = sphereBody.position.y;
-                    var z = sphereBody.position.z;
-                    var ballBody = new CANNON.Body({ mass: 1 });
+                    var x = boxBodyPrincipal.position.x;
+                    var y = boxBodyPrincipal.position.y;
+                    var z = boxBodyPrincipal.position.z;
+                    var ballBody = new CANNON.Body({ mass: 2 });
                     ballBody.addShape(ballShape);
                     var ballMesh = new THREE.Mesh( ballGeometry, material );
                     world.addBody(ballBody);
@@ -332,9 +382,9 @@
                                             shootDirection.z * shootVelo);
 
                     // Move the ball outside the player sphere
-                    x += shootDirection.x * (sphereShape.radius*1.02 + ballShape.radius);
-                    y += shootDirection.y * (sphereShape.radius*1.02 + ballShape.radius);
-                    z += shootDirection.z * (sphereShape.radius*1.02 + ballShape.radius);
+                    x += shootDirection.x * (3 + ballShape.radius);
+                    y += shootDirection.y * (2 + ballShape.radius);
+                    z += shootDirection.z * (2 + ballShape.radius);
                     ballBody.position.set(x,y,z);
                     ballMesh.position.set(x,y,z);
                 }
