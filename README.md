@@ -2,7 +2,6 @@
 
 ## Setup Client
 
-## Setup
 Download [Node.js](https://nodejs.org/en/download/).
 Run this followed commands:
 
@@ -13,7 +12,7 @@ npm install -g parcel-bundler
 ## Install dependencies (only for first time)
 npm i
 
-## Serve at localhost:1234
+## Serve at localhost:8080
 npm run dev
 
 ## Build for production in the dist/ directory

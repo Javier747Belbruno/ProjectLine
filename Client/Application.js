@@ -4,45 +4,67 @@
     import CANNON from 'cannon'
     import PointerLockControls from './js/PointerLockControls.js'
 
+    //var EngineWorld = require('./EngineWorld.js');
 
+    import EngineWorld from './EngineWorld.js'
+    import EnginePlayer from './EnginePlayer.js'
+    import EngineGround from './EngineGround.js'
+
+
+export default class Application
+{
+    /**
+     * Constructor
+     */
+
+    constructor(_options)
+    {
+        // Options
+        this.$canvas = _options.$canvas;
+        //this.controls = {};
+        console.log(_options.$canvas);
+        console.log(this);
+        this.boxBodyPrincipal = {};
+        this.controls = {};
+        //var boxBodyPrincipal;
+        //this.boxShapePrincipal;
+        this.EngineWorldlocal = {};
+        this.Start(_options.$canvas);
+        this.animate = {};
+    }
+
+    Start(canvas)
+    {
+            console.log(this);
             var blocker = document.getElementById( 'blocker' );
             var instructions = document.getElementById( 'instructions' );
+            console.log(instructions);
 
-            var controls;
+
             var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
-            
-            //const OrbitControls = ThreeOrbitControls(THREE)
+            console.log(havePointerLock);
 
-            //import Application from './Application.js'
-
-            //window.application = new Application({
-            var canvas = document.querySelector('.js-canvas')
+            //this.canvas = document.querySelector('.js-canvas')
+            console.log(canvas);
             canvas.style.display = 'none';
-            //})
-            //var havePointerLock = false;
-            //controls.enabled = true;
-            //blocker.style.display = 'none';
-            //instructions.style.display = 'none';
+
 
             if ( havePointerLock ) {
 
                 var element = document.body;
-                //var element = canvas;
+                console.log(document.body);
 
                 var pointerlockchange = function ( event ) {
 
                    if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
                         
-                        //document.addEventListener("DOMContentLoaded", function(event) {
-                          controls.enabled = true;
-                        //});
-                        //controls.enabled = true;
-
+                        
+                        controlsVar.enabled = true;
                         blocker.style.display = 'none';
 
                     } else {
 
-                        controls.enabled = false;
+                        controlsVar.enabled = false;
 
                         blocker.style.display = '-webkit-box';
                         blocker.style.display = '-moz-box';
@@ -51,8 +73,6 @@
                         instructions.style.display = '';
 
                     }
-                    /*controls.enabled = true;
-                    blocker.style.display = 'none';*/
 
                 }
 
@@ -71,6 +91,7 @@
 
                 instructions.addEventListener( 'click', function ( event ) {
                     instructions.style.display = 'none';
+                    console.log(canvas.style)
                     canvas.style.display = '';
 
                     // Ask the browser to lock the pointer
@@ -101,17 +122,11 @@
                     } else {
 
                         element.requestPointerLock();
-                        console.log( "Canvas" + element.requestPointerLock());
-                        //element.requestFullscreen();
+                        console.log(element.requestPointerLock());
 
                     }
-                if(firstTime){
-                firstTime = false;
-                    initCannon();
-                    init();
-                    animate();
-                }
-                    
+               
+
 
                 }, false );
 
@@ -125,7 +140,7 @@
 
            
                 var firstTime= true;
-                var camera, scene, renderer;
+                //var camera, scene, renderer;
                 var geometry, material, mesh;
                 var time = Date.now();
 
@@ -144,63 +159,25 @@
                 
 
 
-            function initCannon(){
-                // Setup our world
-                world = new CANNON.World();
-                world.quatNormalizeSkip = 0;
-                world.quatNormalizeFast = false;
+            	var EngineWorldlocal = new EngineWorld();
 
-                var solver = new CANNON.GSSolver();
+                var world = EngineWorldlocal.world;
+                console.log(EngineWorldlocal);
+            	var EnginePlayer1 = new EnginePlayer(world);
+            	//var boxBodyPrincipal = 1;
+                var boxBodyPrincipal = EnginePlayer1.boxBodyPrincipal;
+            	var boxShapePrincipal = {};
+                boxShapePrincipal = EnginePlayer1.boxShapePrincipal;
+            	var EngineGround1 = new EngineGround(world);
+                
 
-                world.defaultContactMaterial.contactEquationStiffness = 1e9;
-                world.defaultContactMaterial.contactEquationRelaxation = 4;
+          
 
-                solver.iterations = 7;
-                solver.tolerance = 0.1;
-                var split = true;
-                if(split)
-                    world.solver = new CANNON.SplitSolver(solver);
-                else
-                    world.solver = solver;
+            //function init() {
 
-                world.gravity.set(0,-10,0);
-                world.broadphase = new CANNON.NaiveBroadphase();
+                var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );//0.1
 
-                // Create a slippery material (friction coefficient = 0.0)
-                physicsMaterial = new CANNON.Material("slipperyMaterial");
-                var physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial,
-                                                                        physicsMaterial,
-                                                                        0.0, // friction coefficient
-                                                                        0.3  // restitution
-                                                                        );
-                // We must add the contact materials to the world
-                world.addContactMaterial(physicsContactMaterial);
-
-                // Create a boxBodyPrincipal
-                var limits = new CANNON.Vec3(1,1,1);
-                var boxShapePrincipal = new CANNON.Box(limits);
-                var mass = 70//, radius = 3;
-                //sphereShape = new CANNON.Sphere(radius);
-                boxBodyPrincipal = new CANNON.Body({ mass: mass });
-                console.log(boxBodyPrincipal)
-                boxBodyPrincipal.addShape(boxShapePrincipal);
-                boxBodyPrincipal.position.set(0,5,0);
-                boxBodyPrincipal.linearDamping = 0.9;
-                world.addBody(boxBodyPrincipal);
-
-                // Create a plane
-                var groundShape = new CANNON.Plane();
-                /*var */groundBody = new CANNON.Body({ mass: 0 });
-                groundBody.addShape(groundShape);
-                groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-                world.addBody(groundBody);
-            }
-
-            function init() {
-
-                camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );//0.1
-
-                scene = new THREE.Scene();
+                var scene = new THREE.Scene();
                 scene.fog = new THREE.Fog( 0x000000, 0, 500 );
 
                 var ambient = new THREE.AmbientLight( 0x111111 );
@@ -228,9 +205,11 @@
 
 
                 //controls = new PointerLockControls( camera , sphereBody );
-                console.log(boxBody);
-                controls = new PointerLockControls( camera , boxBodyPrincipal);
-                scene.add( controls.getObject() );
+                console.log(this.controls);
+                this.controls = new PointerLockControls( camera , boxBodyPrincipal);
+                var controlsVar = this.controls;
+
+                scene.add( this.controls.getObject() );
 
                 // floor
                 geometry = new THREE.PlaneGeometry( 300, 300, 50, 50 );
@@ -244,11 +223,13 @@
                 scene.add( mesh );
 
                 //renderer = new THREE.WebGLRenderer();
-                renderer = new THREE.WebGLRenderer({ canvas })
+                var renderer = new THREE.WebGLRenderer({ canvas })
                 renderer.shadowMapEnabled = true;
                 renderer.shadowMapSoft = true;
                 renderer.setSize( window.innerWidth, window.innerHeight );
                 renderer.setClearColor( scene.fog.color, 1 );
+
+                //var rendererVar = renderer;
 
                 //controls = new OrbitControls(this.camera, this.$canvas)
 
@@ -312,7 +293,25 @@
                     }
                     last = boxbody;
                 }
-            }
+ 
+
+               function step() {
+                    requestAnimationFrame(step);
+                    if(controlsVar.enabled){
+                        world.step(dt);
+
+                      updatePositions(balls,boxes);
+                    }
+                    //console.log(controlsVar);
+                    controlsVar.update( Date.now() - time );
+                    renderer.render( scene, camera );
+                    time = Date.now();
+                }
+
+                window.requestAnimationFrame(step);
+
+
+            //}
 
             function onWindowResize() {
                 camera.aspect = window.innerWidth / window.innerHeight;
@@ -321,20 +320,8 @@
 
             }
 
-           
-            function animate() {
-                requestAnimationFrame( animate );
-                if(controls.enabled){
-                    world.step(dt);
+          
 
-                  updatePositions(balls,boxes)
-                }
-
-                controls.update( Date.now() - time );
-                renderer.render( scene, camera );
-                time = Date.now();
-
-            }
 
             function updatePositions(ballsArray,boxesArray){
                  // Update ball positions
@@ -363,7 +350,7 @@
             window.addEventListener("click",function(e){
 
 
-                if(controls.enabled==true){
+                if(controlsVar.enabled==true){
                     var x = boxBodyPrincipal.position.x;
                     var y = boxBodyPrincipal.position.y;
                     var z = boxBodyPrincipal.position.z;
@@ -389,4 +376,9 @@
                     ballMesh.position.set(x,y,z);
                 }
             });
+        }
+         
+
+             
+    }
 

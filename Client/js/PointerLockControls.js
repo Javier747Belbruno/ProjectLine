@@ -2,13 +2,15 @@
  * @author mrdoob / http://mrdoob.com/
  * @author schteppe / https://github.com/schteppe
  */ 
- import * as THREE from './Three.js'
+import * as THREE from './Three.js'
 import CANNON from 'cannon'
 export default class
 {
     constructor(camera,boxBodyPrincipal)
     {
-        this.Pointer(camera,boxBodyPrincipal)
+        this.scope;
+        this.Pointer(camera,boxBodyPrincipal);
+        this.update();
     }
 
 Pointer(camera, cannonBody)
@@ -37,6 +39,7 @@ Pointer(camera, cannonBody)
 
     var contactNormal = new CANNON.Vec3(); // Normal in the contact, pointing *out* of whatever the player touched
     var upAxis = new CANNON.Vec3(0,1,0);
+    console.log(cannonBody);
     cannonBody.addEventListener("collide",function(e){
         var contact = e.contact;
 
@@ -148,6 +151,7 @@ Pointer(camera, cannonBody)
     // Moves the camera to the Cannon.js object position and adds velocity to the object if the run key is down
     var inputVelocity = new THREE.Vector3();
     var euler = new THREE.Euler();
+    //console.log(this.update);
     this.update = function ( delta ) {
 
         if ( scope.enabled === false ) return;
@@ -176,13 +180,16 @@ Pointer(camera, cannonBody)
         euler.order = "XYZ";
         quat.setFromEuler(euler);
         inputVelocity.applyQuaternion(quat);
-        //quat.multiplyVector3(inputVelocity);
 
         // Add to the object
         velocity.x += inputVelocity.x;
         velocity.z += inputVelocity.z;
 
         yawObject.position.copy(cannonBody.position);
-    };
+        };
+    
+    
     };
 }
+
+
